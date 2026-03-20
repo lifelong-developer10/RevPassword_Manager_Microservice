@@ -44,7 +44,8 @@ public class  ProfileController {
         return new ProfileResponse(
                 user.getUsername(),
                 user.getEmail(),
-                user.getPhone()
+                user.getPhone(),
+                user.isTwoFactorEnabled()
         );
     }
 

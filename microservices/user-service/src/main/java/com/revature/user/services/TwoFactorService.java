@@ -12,14 +12,14 @@ public class TwoFactorService {
     private final UserRepository userRepo;
 
     public String updateTwoFactor(String username, boolean enabled) {
-
+        System.out.println("UPDATING 2FA for user: " + username + " to " + enabled);
         MasterUser user =
                 userRepo.findByUsername(username).orElseThrow();
 
         user.setTwoFactorEnabled(enabled);
 
         userRepo.save(user);
-
+        System.out.println("2FA UPDATED successfully");
         return enabled ?
                 "2FA Enabled Successfully" :
                 "2FA Disabled Successfully";

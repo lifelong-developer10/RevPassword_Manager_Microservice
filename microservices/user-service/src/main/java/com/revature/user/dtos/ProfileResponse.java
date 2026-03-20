@@ -11,4 +11,5 @@ public class ProfileResponse {
     private String username;
     private String email;
     private String phone;
+    private boolean twoFactorEnabled;
 }

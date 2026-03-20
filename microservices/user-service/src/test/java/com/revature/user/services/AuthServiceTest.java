@@ -1,9 +1,7 @@
 package com.revature.user.services;
 
 import com.revature.user.dtos.RegisterRequest;
-import com.revature.user.dtos.UserQuestionAnswer;
 import com.revature.user.models.MasterUser;
-import com.revature.user.models.SecurityQuestionMaster;
 import com.revature.user.repository.SecurityQuestionMasterRepository;
 import com.revature.user.repository.SecurityQuestionRepository;
 import com.revature.user.repository.UserRepository;
@@ -20,7 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -66,7 +63,7 @@ public class AuthServiceTest {
     @Test
     void register_ShouldThrowException_WhenUsernameExists() {
         registerRequest.setSecurityAnswers(new ArrayList<>(java.util.List.of(new com.revature.user.dtos.UserQuestionAnswer(), new com.revature.user.dtos.UserQuestionAnswer(), new com.revature.user.dtos.UserQuestionAnswer())));
-        when(userRepository.existsByUsername(anyString())).thenReturn(true);
+        lenient().when(userRepository.existsByUsername(anyString())).thenReturn(true);
         assertThrows(RuntimeException.class, () -> authService.register(registerRequest));
     }
 
@@ -74,12 +71,13 @@ public class AuthServiceTest {
     void changePassword_ShouldThrowException_WhenPasswordsDoNotMatch() {
         MasterUser user = new MasterUser();
         user.setPasswordEncrypted("encodedPassword");
-        when(userRepository.findByUsername("testuser")).thenReturn(java.util.Optional.of(user));
-        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
-
+        
         com.revature.user.dtos.ChangePasswordRequest req = new com.revature.user.dtos.ChangePasswordRequest();
         req.setCurrentPassword("wrong");
         
+        lenient().when(userRepository.findByUsername("testuser")).thenReturn(java.util.Optional.of(user));
+        lenient().when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
+
         assertThrows(RuntimeException.class, () -> authService.changePassword("testuser", req));
     }
 }

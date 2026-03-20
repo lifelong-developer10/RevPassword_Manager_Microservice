@@ -32,9 +32,9 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
 
-            // Skip validation for public auth endpoints
-            if (request.getURI().getPath().contains("/api/auth/login") || 
-                request.getURI().getPath().contains("/api/auth/register")) {
+            // Skip validation for public auth and forgot-password endpoints
+            String path = request.getURI().getPath();
+            if (path.startsWith("/api/auth/") || path.startsWith("/api/forgot/")) {
                 return chain.filter(exchange);
             }
 

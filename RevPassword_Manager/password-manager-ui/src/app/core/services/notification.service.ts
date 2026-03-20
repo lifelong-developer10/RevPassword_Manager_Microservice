@@ -17,7 +17,7 @@ export interface Notification {
 })
 export class NotificationService {
  
-  private api = 'http://localhost:8085/api/notifications';
+  private api = 'http://localhost:8080/api/notifications';
  
   constructor(private http: HttpClient) {}
  

@@ -31,6 +31,7 @@ public class OtpService {
         String email = userClient.getEmail(user.getUsername());
 
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("soumya20901@gmail.com");
         message.setTo(email);
         message.setSubject("Your Login OTP");
         message.setText("Your OTP for login is: " + otp);

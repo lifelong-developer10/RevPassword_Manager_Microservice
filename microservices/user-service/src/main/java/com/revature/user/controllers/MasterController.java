@@ -67,7 +67,8 @@ public class MasterController {
         return new ProfileResponse(
                 user.getUsername(),
                 user.getEmail(),
-                user.getPhone()
+                user.getPhone(),
+                user.isTwoFactorEnabled()
         );
 
     }

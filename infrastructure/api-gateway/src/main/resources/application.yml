@@ -15,7 +15,7 @@ spring:
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins: "http://localhost:4200"
+            allowedOriginPatterns: "*"
             allowedMethods:
               - GET
               - POST
@@ -54,7 +54,7 @@ spring:
         - id: notification-service
           uri: lb://notification-service
           predicates:
-            - Path=/api/otp/**
+            - Path=/api/otp/**,/api/notifications/**
 
 
 eureka:
