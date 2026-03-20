@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.Map;
-
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     
@@ -25,24 +24,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
-    public ResponseEntity<Map<String, String>> handleAuthenticationExceptions(org.springframework.security.core.AuthenticationException ex) {
-        System.out.println("CATCHING AuthenticationException: " + ex.getMessage());
+    @ExceptionHandler({
+        org.springframework.security.authentication.BadCredentialsException.class,
+        org.springframework.security.core.AuthenticationException.class
+    })
+    public ResponseEntity<Map<String, String>> handleAuthenticationExceptions(Exception ex) {
+        System.out.println("CATCHING Auth Exception: " + ex.getMessage());
         Map<String, String> errors = new HashMap<>();
         errors.put("error", "Invalid username or password");
-        return new ResponseEntity<>(errors, org.springframework.http.HttpStatus.UNAUTHORIZED);
-    }
-
-    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
-    public ResponseEntity<Map<String, String>> handleBadCredentialsExceptions(org.springframework.security.authentication.BadCredentialsException ex) {
-        System.out.println("CATCHING BadCredentialsException: " + ex.getMessage());
-        Map<String, String> errors = new HashMap<>();
-        errors.put("error", "Invalid username or password");
-        return new ResponseEntity<>(errors, org.springframework.http.HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(errors, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeExceptions(RuntimeException ex) {
+        System.out.println("CATCHING RuntimeException: " + ex.getClass().getName() + " - " + ex.getMessage());
         Map<String, String> errors = new HashMap<>();
         errors.put("error", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);

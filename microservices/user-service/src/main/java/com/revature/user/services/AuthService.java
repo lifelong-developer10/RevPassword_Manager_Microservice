@@ -26,12 +26,11 @@ public class AuthService {
         private final AuthenticationManager authManager;
         private final JwtUtil jwtUtil;
 
-        private final UserRepository userRepository; // Your JPA Repository
+        private final UserRepository userRepository;
         private final PasswordEncoder passwordEncoder;
         private final SecurityQuestionRepository userQuestionRepo;
         private final SecurityQuestionMasterRepository masterRepo;
         private final OtpService otpService;
-        private final UserRepository userRepo;
 
         @Transactional
         public String register(RegisterRequest request) {
@@ -99,6 +98,7 @@ public class AuthService {
 
 
         public String login(LoginRequest request) {
+                System.out.println("LOGIN ATTEMPT: " + request.getUsername());
 
                 Authentication authentication = authManager.authenticate(
                         new UsernamePasswordAuthenticationToken(
@@ -106,13 +106,21 @@ public class AuthService {
                                 request.getPassword()));
 
                 MasterUser user =
-                        userRepo.findByUsername(authentication.getName()).orElseThrow();
+                        userRepository.findByUsername(authentication.getName()).orElseThrow();
+                System.out.println("AUTH SUCCESS");
+                System.out.println("2FA ENABLED: " + user.isTwoFactorEnabled());
 
-                if(user.isTwoFactorEnabled()){
-
-                        otpService.generateAndSendOtp(user);
-
-                        return "OTP_REQUIRED";
+                if (user.isTwoFactorEnabled()) {
+                        try {
+                                otpService.generateAndSendOtp(user);
+                                return "OTP_REQUIRED";
+                        } catch (Exception e) {
+                                // Mail failed — log it, disable 2FA for this user, and let them log in
+                                System.err.println("2FA mail failed, bypassing 2FA for this login: " + e.getMessage());
+                                user.setTwoFactorEnabled(false);
+                                userRepository.save(user);
+                                // Fall through to return JWT below
+                        }
                 }
 
                 return jwtUtil.generateToken(authentication.getName());

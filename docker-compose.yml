@@ -1,49 +1,68 @@
-version: '3.8'
-
 services:
+
+  # ─── DATABASE ───────────────────────────────────────────────
   mysql:
     image: mysql:8.0
+    container_name: mysql
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: RevPassword_Manager_Services
     ports:
       - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      timeout: 20s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-ppassword"]
+      interval: 10s
+      timeout: 10s
       retries: 10
+      start_period: 30s
+    networks:
+      - revpassword-net
 
+  # ─── INFRASTRUCTURE ─────────────────────────────────────────
   eureka-server:
     build:
       context: .
       dockerfile: infrastructure/eureka-server/Dockerfile
+    container_name: eureka-server
     ports:
       - "8761:8761"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
       retries: 10
+      start_period: 60s
+    networks:
+      - revpassword-net
 
   config-server:
     build:
       context: .
       dockerfile: infrastructure/config-server/Dockerfile
+    container_name: config-server
     ports:
       - "8888:8888"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     depends_on:
       eureka-server:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD-SHELL", "curl -f http://localhost:8888/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
       retries: 10
+      start_period: 60s
+    networks:
+      - revpassword-net
 
   api-gateway:
     build:
       context: .
       dockerfile: infrastructure/api-gateway/Dockerfile
+    container_name: api-gateway
     ports:
       - "8080:8080"
     environment:
@@ -53,9 +72,21 @@ services:
     depends_on:
       config-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - revpassword-net
 
+  # ─── MICROSERVICES ──────────────────────────────────────────
   user-service:
-    build: ./microservices/user-service
+    build:
+      context: .
+      dockerfile: microservices/user-service/Dockerfile
+    container_name: user-service
     ports:
       - "8081:8081"
     environment:
@@ -63,14 +94,27 @@ services:
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/RevPassword_Manager_Services?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_MAIL_HOST=smtp.gmail.com
+      - SPRING_MAIL_PORT=587
+      - SPRING_MAIL_USERNAME=${MAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${MAIL_PASSWORD}
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=true
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true
     depends_on:
       mysql:
         condition: service_healthy
       config-server:
         condition: service_healthy
+    networks:
+      - revpassword-net
 
   vault-service:
-    build: ./microservices/vault-service
+    build:
+      context: .
+      dockerfile: microservices/vault-service/Dockerfile
+    container_name: vault-service
     ports:
       - "8082:8082"
     environment:
@@ -78,14 +122,21 @@ services:
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/RevPassword_Manager_Services?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=password
     depends_on:
       mysql:
         condition: service_healthy
       config-server:
         condition: service_healthy
+    networks:
+      - revpassword-net
 
   generator-service:
-    build: ./microservices/generator-service
+    build:
+      context: .
+      dockerfile: microservices/generator-service/Dockerfile
+    container_name: generator-service
     ports:
       - "8083:8083"
     environment:
@@ -95,9 +146,14 @@ services:
     depends_on:
       config-server:
         condition: service_healthy
+    networks:
+      - revpassword-net
 
   security-service:
-    build: ./microservices/security-service
+    build:
+      context: .
+      dockerfile: microservices/security-service/Dockerfile
+    container_name: security-service
     ports:
       - "8084:8084"
     environment:
@@ -107,9 +163,14 @@ services:
     depends_on:
       config-server:
         condition: service_healthy
+    networks:
+      - revpassword-net
 
   notification-service:
-    build: ./microservices/notification-service
+    build:
+      context: .
+      dockerfile: microservices/notification-service/Dockerfile
+    container_name: notification-service
     ports:
       - "8085:8085"
     environment:
@@ -117,8 +178,39 @@ services:
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/RevPassword_Manager_Services?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_MAIL_HOST=smtp.gmail.com
+      - SPRING_MAIL_PORT=587
+      - SPRING_MAIL_USERNAME=${MAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${MAIL_PASSWORD}
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=true
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true
     depends_on:
       mysql:
         condition: service_healthy
       config-server:
         condition: service_healthy
+    networks:
+      - revpassword-net
+
+  # ─── FRONTEND ───────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./RevPassword_Manager/password-manager-ui
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - revpassword-net
+
+# ─── VOLUMES & NETWORKS ─────────────────────────────────────
+volumes:
+  mysql-data:
+
+networks:
+  revpassword-net:
+    driver: bridge

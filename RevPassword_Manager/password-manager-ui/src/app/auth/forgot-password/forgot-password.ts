@@ -112,16 +112,12 @@ export class ForgotPasswordComponent {
     this.auth.generateOtp(this.username).subscribe({
 
       next: () => {
-
         this.loading = false;
-        Swal.fire('OTP Sent', 'Check console/email', 'success');
-
-       this.zone.run(() => {
-this.setView('verifyOtp');
-this.cd.detectChanges();            });
-
-
-
+        this.zone.run(() => {
+          this.setView('verifyOtp');
+          this.cd.detectChanges();
+        });
+        Swal.fire('OTP Sent', 'Check your email', 'success');
       },
 
       error: () => {
@@ -141,13 +137,12 @@ this.cd.detectChanges();            });
     this.auth.getRecoveryQuestions(this.username).subscribe({
 
       next: (res: any) => {
-
         this.loading = false;
         this.questions = res;
-
-this.zone.run(() => {
-this.setView('verifyQuestions');
-this.cd.detectChanges();});
+        this.zone.run(() => {
+          this.setView('verifyQuestions');
+          this.cd.detectChanges();
+        });
       },
 
       error: () => {
@@ -168,14 +163,20 @@ this.cd.detectChanges();});
       code: this.otp
     }).subscribe({
 
-      next: () => {
-
+      next: (res: any) => {
         this.loading = false;
-        Swal.fire('Verified', 'OTP correct', 'success');
 
-this.zone.run(() => {
-this.setView('reset');
-this.cd.detectChanges();});
+        // response is plain text: "OTP Verified" or "Invalid OTP"
+        if (res === 'OTP Verified') {
+          Swal.fire('Verified', 'OTP correct', 'success').then(() => {
+            this.zone.run(() => {
+              this.setView('reset');
+              this.cd.detectChanges();
+            });
+          });
+        } else {
+          Swal.fire('Error', 'Invalid OTP', 'error');
+        }
       },
 
       error: () => {
@@ -194,24 +195,31 @@ this.cd.detectChanges();});
       answers[q.questionId] = q.answer;
     });
 
+    this.loading = true;
+
     this.auth.verifySecurityAnswers({
       username: this.username,
       answers: answers
     }).subscribe({
 
       next: (res: any) => {
+        this.loading = false;
 
         if (res === 'VERIFIED') {
-          Swal.fire('Correct answers');
-          this.setView('reset');
+          Swal.fire('Correct!', 'Answers verified', 'success').then(() => {
+            this.zone.run(() => {
+              this.setView('reset');
+              this.cd.detectChanges();
+            });
+          });
         } else {
-          Swal.fire('Incorrect answers');
+          Swal.fire('Incorrect', 'One or more answers are wrong', 'error');
         }
-
       },
 
       error: () => {
-       Swal.fire('Verification failed');
+        this.loading = false;
+        Swal.fire('Verification failed', '', 'error');
       }
 
     });

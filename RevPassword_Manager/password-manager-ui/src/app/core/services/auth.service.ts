@@ -30,7 +30,7 @@ getQuestions() {
 
 }
 
-  
+
   saveToken(token: string) {
     localStorage.setItem('token', token);
   }
@@ -122,12 +122,10 @@ enable2FA(enabled: boolean) {
 }
 
 verify2FA(data: any) {
-
-  return this.http.post<any>(
-    'http://localhost:8080/api/profile/verify-otp',
+  return this.http.post(
+    'http://localhost:8080/api/auth/verify-otp',
     data
   );
-
 }
 disable2FA() {
   return this.http.post(`${this.baseUrl}/api/auth/2fa`, {});

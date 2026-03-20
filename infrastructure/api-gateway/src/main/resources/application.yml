@@ -15,7 +15,8 @@ spring:
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOriginPatterns: "*"
+            allowedOrigins:
+              - http://localhost:4200
             allowedMethods:
               - GET
               - POST
@@ -28,7 +29,14 @@ spring:
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/api/auth/**,/api/forgot/**,/api/profile/**,/api/password/forgot/**,/api/password/reset/**,/api/user/**,/api/users/**
+            - Path=/api/auth/**,/api/forgot/**,/api/password/forgot/**,/api/password/reset/**
+            
+        - id: user-service-protected
+          uri: lb://user-service
+          predicates:
+            - Path=/api/profile/**,/api/user/**,/api/users/**
+          filters:
+            - JwtAuthenticationFilter
             
         - id: vault-service
           uri: lb://vault-service
@@ -55,7 +63,6 @@ spring:
           uri: lb://notification-service
           predicates:
             - Path=/api/otp/**,/api/notifications/**
-
 
 eureka:
   client:

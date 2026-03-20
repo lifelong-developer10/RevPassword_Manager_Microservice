@@ -24,8 +24,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: soumya20901@gmail.com
-    password: blnv dsxu hltl jxik
+    username: shubhadahshingate@gmail.com
+    password: ${MAIL_PASSWORD:your_app_password_here}
     properties:
       mail:
         smtp:
@@ -38,7 +38,8 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
-
+  instance:
+    prefer-ip-address: true
 jwt:
   secret: h6U9t8Wk2z9P5qR4v7M2L0n3B1X8y5A7V9c4G2f1K6E=
   expiration: 86400000

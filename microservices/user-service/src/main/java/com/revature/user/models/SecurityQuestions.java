@@ -17,6 +17,7 @@ public class SecurityQuestions {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private MasterUser user;
 
     @ManyToOne

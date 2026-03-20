@@ -12,8 +12,6 @@ import com.revature.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 import java.util.Map;
@@ -24,9 +22,8 @@ import java.util.Optional;
 public class ForgotPasswordService {
 
     private final UserRepository userRepo;
-    private final SecurityQuestionRepository questionRepo;
+    private final SecurityQuestionRepository userQuestionRepo;
     private final PasswordEncoder encoder;
-   private final  SecurityQuestionRepository userQuestionRepo;
 
     public List<UserQuestionAnswer> getUserQuestionsWithMask(String username) {
 

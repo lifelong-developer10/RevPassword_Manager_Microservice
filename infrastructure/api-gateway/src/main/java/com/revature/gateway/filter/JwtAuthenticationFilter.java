@@ -13,7 +13,6 @@ import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 
 @Component
@@ -34,10 +33,17 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
 
             // Skip validation for public auth and forgot-password endpoints
             String path = request.getURI().getPath();
-            if (path.startsWith("/api/auth/") || path.startsWith("/api/forgot/")) {
+
+
+            if (path.startsWith("/api/auth/") ||
+                    path.startsWith("/api/forgot/") ||
+                    path.startsWith("/api/password/") ||
+                    path.startsWith("/api/otp/")) {
+                System.out.println("GATEWAY FORWARDING: " + exchange.getRequest().getURI());
+                System.out.println("Skipping JWT filter for: " + path);
                 return chain.filter(exchange);
             }
-
+            System.out.println("JWT FILTER RUNNING FOR: " + path);
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                 return onError(exchange, "Missing authorization header", HttpStatus.UNAUTHORIZED);
             }
@@ -48,7 +54,7 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             }
 
             String token = authHeader.substring(7);
-            
+            System.out.println("GATEWAY FORWARDING: " + exchange.getRequest().getURI());
             try {
                 byte[] keyBytes = io.jsonwebtoken.io.Decoders.BASE64.decode(secretKey);
                 Key key = Keys.hmacShaKeyFor(keyBytes);
