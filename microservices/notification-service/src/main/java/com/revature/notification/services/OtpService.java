@@ -1,15 +1,15 @@
 package com.revature.notification.services;
 
 import com.revature.notification.dtos.OtpRequest;
+import com.revature.notification.models.OTPGenerater;
+import com.revature.notification.repository.OtpRepository;
 import com.revature.notification.repository.UserClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.LocalDateTime;
 
 @Service
 public class OtpService {
@@ -20,25 +20,32 @@ public class OtpService {
     @Autowired
     private UserClient userClient;
 
-    private final Map<String, String> otpStorage = new HashMap<>();
-    private final Map<String, Instant> otpExpiry = new HashMap<>();
-    private static final long OTP_VALIDITY_SECONDS = 300; // 5 minutes
+    @Autowired
+    private OtpRepository otpRepository;
 
-    public String generateAndSendOtp(OtpRequest user) {
+    private static final int OTP_VALIDITY_MINUTES = 5;
+
+    public String generateAndSendOtp(OtpRequest request) {
 
         String otp = String.valueOf((int) (Math.random() * 900000) + 100000);
 
-        otpStorage.put(user.getUsername(), otp);
-        otpExpiry.put(user.getUsername(), Instant.now().plusSeconds(OTP_VALIDITY_SECONDS));
+        // Persist OTP to DB (replaces in-memory HashMap)
+        OTPGenerater entity = new OTPGenerater();
+        entity.setOwnerUsername(request.getUsername());
+        entity.setCode(otp);
+        entity.setExpiryTime(LocalDateTime.now().plusMinutes(OTP_VALIDITY_MINUTES));
+        entity.setUsed(false);
+        otpRepository.save(entity);
 
-        // call user service to get email
-        String email = userClient.getEmail(user.getUsername());
+        // Fetch email from user-service via Feign
+        String email = userClient.getEmail(request.getUsername());
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("shubhadahshingate@gmail.com");
         message.setTo(email);
         message.setSubject("Your Login OTP");
-        message.setText("Your OTP for login is: " + otp + "\nThis OTP is valid for 5 minutes.");
+        message.setText("Your OTP for login is: " + otp
+                + "\nThis OTP is valid for " + OTP_VALIDITY_MINUTES + " minutes.");
 
         mailSender.send(message);
 
@@ -47,26 +54,26 @@ public class OtpService {
 
     public boolean verifyOtp(String username, String otp) {
 
-        String storedOtp = otpStorage.get(username);
-        Instant expiry = otpExpiry.get(username);
+        OTPGenerater entity = otpRepository
+                .findTopByOwnerUsernameOrderByExpiryTimeDesc(username)
+                .orElse(null);
 
-        if (storedOtp == null || expiry == null) {
+        if (entity == null || entity.isUsed()) {
             return false;
         }
 
-        if (Instant.now().isAfter(expiry)) {
-            otpStorage.remove(username);
-            otpExpiry.remove(username);
+        if (LocalDateTime.now().isAfter(entity.getExpiryTime())) {
             return false;
         }
 
-        boolean valid = storedOtp.equals(otp);
-
-        if (valid) {
-            otpStorage.remove(username);
-            otpExpiry.remove(username);
+        if (!entity.getCode().equals(otp)) {
+            return false;
         }
 
-        return valid;
+        // Mark as used so it cannot be replayed
+        entity.setUsed(true);
+        otpRepository.save(entity);
+
+        return true;
     }
 }

@@ -23,8 +23,6 @@ public class Notification {
 
     private boolean readStatus;
 
-    private Boolean isRead;
-
     @Column(name = "created_at")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;

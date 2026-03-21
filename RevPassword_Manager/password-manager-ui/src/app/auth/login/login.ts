@@ -122,7 +122,8 @@ export class LoginComponent {
       },
       error: (err) => {
         console.error(err);
-        Swal.fire('Login Failed', err?.error?.error || 'Invalid credentials', 'error');
+        const msg = err?.error?.error || 'Invalid credentials';
+        Swal.fire('Login Failed', msg, 'error');
       }
     });
   }

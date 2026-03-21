@@ -263,7 +263,6 @@ public class PasswordEntryService {
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
         String line;
-
         boolean header = true;
 
         while ((line = reader.readLine()) != null) {
@@ -273,21 +272,47 @@ public class PasswordEntryService {
                 continue;
             }
 
-            String[] data = line.split(",");
+            // Parse CSV respecting quoted fields
+            String[] data = parseCsvLine(line);
+            if (data.length < 6) continue;
 
             AllPasswordEntry entry = new AllPasswordEntry();
             entry.setAccountName(data[0]);
             entry.setWebsite(data[1]);
             entry.setUsername(data[2]);
-            entry.setPasswordEncrypted(data[3]);
+            entry.setPasswordEncrypted(data[3]); // already encrypted from export
             entry.setCategory(data[4]);
-            entry.setNotes(data[5]);
+            entry.setNotes(data.length > 5 ? data[5] : "");
             entry.setOwnerUsername(username);
             entry.setCreatedAt(LocalDateTime.now());
             entry.setUpdatedAt(LocalDateTime.now());
 
             repo.save(entry);
         }
+    }
+
+    private String[] parseCsvLine(String line) {
+        java.util.List<String> tokens = new java.util.ArrayList<>();
+        boolean inQuotes = false;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '"') {
+                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                    sb.append('"');
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (c == ',' && !inQuotes) {
+                tokens.add(sb.toString());
+                sb.setLength(0);
+            } else {
+                sb.append(c);
+            }
+        }
+        tokens.add(sb.toString());
+        return tokens.toArray(new String[0]);
     }
 
     private String escapeCsv(String value) {

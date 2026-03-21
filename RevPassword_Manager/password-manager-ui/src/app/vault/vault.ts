@@ -105,11 +105,7 @@ openEdit(v: any) {
 
     if (!result.value) return;
 
-    this.profileService.changePassword({
-      currentPassword: result.value,
-      newPassword: result.value,
-      confirmPassword: result.value
-    }).subscribe({
+    this.profileService.verifyMasterPassword(result.value).subscribe({
 
       next: () => {
 
@@ -129,7 +125,6 @@ openEdit(v: any) {
           favorite: v.favorite
         };
 
-        // ⭐ Force UI refresh
         this.cd.detectChanges();
 
       },
@@ -408,17 +403,13 @@ togglePassword(v: any) {
 
     if (!master) return;
 
-    this.profileService.changePassword({
-      currentPassword: master,
-      newPassword: master,
-      confirmPassword: master
-    }).subscribe({
+    this.profileService.verifyMasterPassword(master).subscribe({
 
       next: () => {
 
         v.show = true;
 
-        this.cd.detectChanges();   // ⭐ IMPORTANT
+        this.cd.detectChanges();
 
       },
 
@@ -436,7 +427,7 @@ Swal.fire({
   } else {
 
     v.show = false;
-    this.cd.detectChanges();   // ⭐ IMPORTANT
+    this.cd.detectChanges();
 
   }
 

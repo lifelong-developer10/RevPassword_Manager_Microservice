@@ -56,6 +56,9 @@ public class NotificationService {
             dto.setId(n.getId());
             dto.setUsername(n.getUsername());
             dto.setMessage(n.getMessage());
+            dto.setType(n.getType());
+            dto.setReadStatus(n.isReadStatus());
+            dto.setCreatedAt(n.getCreatedAt());
             return dto;
         }).toList();
     }

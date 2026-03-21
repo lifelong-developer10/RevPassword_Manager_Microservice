@@ -38,7 +38,6 @@ export class NotificationService {
 notificationCount$ = this.notificationCountSource.asObservable();
 
 setNotificationCount(count: number) {
-     this.notificationCountSource.next(null as any);
   this.notificationCountSource.next(count);
 }
 }

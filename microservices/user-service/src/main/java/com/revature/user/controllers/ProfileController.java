@@ -98,6 +98,35 @@ public class  ProfileController {
         return security.updateQuestions(username, list);
     }
 
+    // ================= VERIFY MASTER PASSWORD =================
+
+    /**
+     * Verifies the master password without changing it.
+     * Used by the frontend to gate access to sensitive vault operations.
+     */
+    @PostMapping("/verify-master-password")
+    public ResponseEntity<?> verifyMasterPassword(
+            Authentication auth,
+            @RequestBody Map<String, String> body) {
+
+        String username = auth.getName();
+        String masterPassword = body.get("masterPassword");
+
+        if (masterPassword == null || masterPassword.isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Master password is required"));
+        }
+
+        boolean valid = authService.verifyMasterPassword(username, masterPassword);
+
+        if (!valid) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid master password"));
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Verified"));
+    }
+
     // ================= 2FA =================
 
     @PostMapping("/2fa")

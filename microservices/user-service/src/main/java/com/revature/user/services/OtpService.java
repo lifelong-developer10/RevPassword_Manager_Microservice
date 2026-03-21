@@ -1,73 +1,42 @@
 package com.revature.user.services;
 
 import com.revature.user.models.MasterUser;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class OtpService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final NotificationClient notificationClient;
 
-    private final Map<String, String> otpStorage = new HashMap<>();
-    private final Map<String, Instant> otpExpiry = new HashMap<>();
-    private static final long OTP_VALIDITY_SECONDS = 300; // 5 minutes
-
+    /**
+     * Delegates OTP generation and email sending to notification-service.
+     * notification-service stores the OTP and sends the email.
+     */
     public void generateAndSendOtp(MasterUser user) {
-
-        String otp = String.valueOf((int)(Math.random() * 900000) + 100000);
-
-        // Store OTP before attempting to send — so verifyOtp works even if mail is slow
-        otpStorage.put(user.getUsername(), otp);
-        otpExpiry.put(user.getUsername(), Instant.now().plusSeconds(OTP_VALIDITY_SECONDS));
-
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom("shubhadahshingate@gmail.com");
-            message.setTo(user.getEmail());
-            message.setSubject("Your Login OTP");
-            message.setText("Your OTP for login is: " + otp + "\nThis OTP is valid for 5 minutes.");
-            mailSender.send(message);
-            System.out.println("OTP email sent to: " + user.getEmail());
-        } catch (MailException e) {
-            // Log the error but don't crash login — OTP is still stored in memory
-            // so if mail is configured correctly it will work; for dev, log the OTP
-            System.err.println("WARNING: Failed to send OTP email: " + e.getMessage());
-            System.out.println("DEV MODE - OTP for " + user.getUsername() + " is: " + otp);
-            throw new RuntimeException("Failed to send OTP email. Please check mail configuration: " + e.getMessage());
+            notificationClient.generateOtp(Map.of("username", user.getUsername()));
+            System.out.println("OTP generation delegated to notification-service for: " + user.getUsername());
+        } catch (Exception e) {
+            System.err.println("Failed to generate OTP via notification-service: " + e.getMessage());
+            throw new RuntimeException("Failed to send OTP. Please check mail configuration.");
         }
     }
 
+    /**
+     * Delegates OTP verification to notification-service.
+     * notification-service holds the OTP in memory.
+     */
     public boolean verifyOtp(String username, String otp) {
-
-        String storedOtp = otpStorage.get(username);
-        Instant expiry = otpExpiry.get(username);
-
-        if (storedOtp == null || expiry == null) {
+        try {
+            String result = notificationClient.verifyOtp(Map.of("username", username, "code", otp));
+            return "OTP Verified".equals(result);
+        } catch (Exception e) {
+            System.err.println("OTP verification failed: " + e.getMessage());
             return false;
         }
-
-        if (Instant.now().isAfter(expiry)) {
-            otpStorage.remove(username);
-            otpExpiry.remove(username);
-            return false;
-        }
-
-        boolean valid = storedOtp.equals(otp);
-
-        if (valid) {
-            otpStorage.remove(username);
-            otpExpiry.remove(username);
-        }
-
-        return valid;
     }
 }

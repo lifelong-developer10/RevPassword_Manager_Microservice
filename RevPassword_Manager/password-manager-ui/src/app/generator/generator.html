@@ -1,48 +1,90 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary px-4">
-
-  <span class="navbar-brand fw-bold">
-    🔐 Password Manager
-  </span>
-
+  <span class="navbar-brand fw-bold">🔐 Password Manager</span>
   <div class="ms-auto">
-
-    <button class="btn btn-light btn-sm"
-            routerLink="/dashboard">
-      Dashboard
-    </button>
-
-    <button class="btn btn-light btn-sm ms-2"
-            routerLink="/vault">
-      Vault
-    </button>
-
-    <button class="btn btn-light btn-sm ms-2"
-            routerLink="/profile">
-      Profile
-    </button>
-
-    <button class="btn btn-danger btn-sm ms-2"
-            (click)="logout()">
-      Logout
-    </button>
-
+    <button class="btn btn-light btn-sm" routerLink="/dashboard">Dashboard</button>
+    <button class="btn btn-light btn-sm ms-2" routerLink="/vault">Vault</button>
+    <button class="btn btn-light btn-sm ms-2" routerLink="/profile">Profile</button>
+    <button class="btn btn-danger btn-sm ms-2" (click)="logout()">Logout</button>
   </div>
-
 </nav>
-<div class="container mt-4">
 
+<div class="container mt-4">
   <h3>Password Generator</h3>
 
-  <div class="card p-4 shadow">
+  <div class="card p-4 shadow mb-4">
+    <h5>Options</h5>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Length: {{ options.length }}</label>
+        <input type="range" class="form-range" min="4" max="64"
+               [(ngModel)]="options.length">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Count</label>
+        <input type="number" class="form-control" min="1" max="20"
+               [(ngModel)]="options.count">
+      </div>
+    </div>
 
-    <input class="form-control"
-           [(ngModel)]="password">
+    <div class="row mt-3">
+      <div class="col-auto">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="upper"
+                 [(ngModel)]="options.uppercase">
+          <label class="form-check-label" for="upper">Uppercase (A-Z)</label>
+        </div>
+      </div>
+      <div class="col-auto">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="lower"
+                 [(ngModel)]="options.lowercase">
+          <label class="form-check-label" for="lower">Lowercase (a-z)</label>
+        </div>
+      </div>
+      <div class="col-auto">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="nums"
+                 [(ngModel)]="options.numbers">
+          <label class="form-check-label" for="nums">Numbers (0-9)</label>
+        </div>
+      </div>
+      <div class="col-auto">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="syms"
+                 [(ngModel)]="options.symbols">
+          <label class="form-check-label" for="syms">Symbols (!@#$...)</label>
+        </div>
+      </div>
+      <div class="col-auto">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="excl"
+                 [(ngModel)]="options.excludeSimilar">
+          <label class="form-check-label" for="excl">Exclude Similar (0, O, l, 1)</label>
+        </div>
+      </div>
+    </div>
 
-    <button class="btn btn-primary mt-3"
-            (click)="generate()">
-      Generate
+    <button class="btn btn-primary mt-3" (click)="generate()">
+      Generate Passwords
     </button>
-
   </div>
 
+  <div *ngIf="passwords.length > 0" class="card p-4 shadow">
+    <h5>Generated Passwords</h5>
+    <ul class="list-group">
+      <li *ngFor="let p of passwords"
+          class="list-group-item d-flex justify-content-between align-items-center">
+        <span class="font-monospace">{{ p }}</span>
+        <span class="ms-2" [ngClass]="getStrengthClass(p)">
+          {{ getStrengthLabel(p) }}
+        </span>
+        <div>
+          <button class="btn btn-sm btn-outline-secondary ms-2"
+                  (click)="copyToClipboard(p)">Copy</button>
+          <button class="btn btn-sm btn-outline-success ms-1"
+                  (click)="usePassword(p)">Use</button>
+        </div>
+      </li>
+    </ul>
+  </div>
 </div>

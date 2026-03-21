@@ -1,21 +1,19 @@
 package com.revature.user.services;
 
 import com.revature.user.dtos.ResetPasswordRequest;
-import com.revature.user.dtos.SecurityQuestionDTO;
 import com.revature.user.dtos.UserQuestionAnswer;
 import com.revature.user.dtos.VerifySecurityAnswersRequest;
 import com.revature.user.models.MasterUser;
-import com.revature.user.models.SecurityQuestionMaster;
 import com.revature.user.models.SecurityQuestions;
 import com.revature.user.repository.SecurityQuestionRepository;
 import com.revature.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -80,8 +78,8 @@ public class ForgotPasswordService {
 
 
     // STEP 3 — Reset Password
-    public String resetPassword(
-            ResetPasswordRequest request) {
+    @Transactional
+    public String resetPassword(ResetPasswordRequest request) {
 
         MasterUser user =
                 userRepo.findByUsername(

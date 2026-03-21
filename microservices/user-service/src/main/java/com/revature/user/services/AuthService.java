@@ -7,7 +7,6 @@ import com.revature.user.models.SecurityQuestions;
 import com.revature.user.repository.SecurityQuestionMasterRepository;
 import com.revature.user.repository.SecurityQuestionRepository;
 import com.revature.user.repository.UserRepository;
-
 import com.revature.user.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -111,16 +110,8 @@ public class AuthService {
                 System.out.println("2FA ENABLED: " + user.isTwoFactorEnabled());
 
                 if (user.isTwoFactorEnabled()) {
-                        try {
-                                otpService.generateAndSendOtp(user);
-                                return "OTP_REQUIRED";
-                        } catch (Exception e) {
-                                // Mail failed — log it, disable 2FA for this user, and let them log in
-                                System.err.println("2FA mail failed, bypassing 2FA for this login: " + e.getMessage());
-                                user.setTwoFactorEnabled(false);
-                                userRepository.save(user);
-                                // Fall through to return JWT below
-                        }
+                        otpService.generateAndSendOtp(user);
+                        return "OTP_REQUIRED";
                 }
 
                 return jwtUtil.generateToken(authentication.getName());
@@ -166,5 +157,10 @@ public class AuthService {
 
         public List<SecurityQuestionMaster> getAllQuestions() {
                 return masterRepo.findAll();
+        }
+
+        public boolean verifyMasterPassword(String username, String rawPassword) {
+                MasterUser user = userRepository.findByUsername(username).orElseThrow();
+                return passwordEncoder.matches(rawPassword, user.getPasswordEncrypted());
         }
 }

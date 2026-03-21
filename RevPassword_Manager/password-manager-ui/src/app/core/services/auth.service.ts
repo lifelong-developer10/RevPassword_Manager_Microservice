@@ -50,12 +50,12 @@ getQuestions() {
   }
 verifyMasterPassword(password: string) {
   return this.http.post(
-    `${this.baseUrl}/api/auth/verify-master-password`,
+    `http://localhost:8080/api/profile/verify-master-password`,
     { masterPassword: password }
   );
 }
 getProfile() {
-  return this.http.get('http://localhost:8080/api/user/profile');
+  return this.http.get('http://localhost:8080/api/profile');
 }
 
 updateProfile(data: any) {
@@ -115,7 +115,7 @@ checkUser(username: string) {
 }
 enable2FA(enabled: boolean) {
   return this.http.post(
-    `${this.baseUrl}/api/profile/2fa`,
+    'http://localhost:8080/api/profile/2fa',
     { enabled },
     { responseType: 'text' as 'json' }
   );
@@ -127,7 +127,12 @@ verify2FA(data: any) {
     data
   );
 }
+
 disable2FA() {
-  return this.http.post(`${this.baseUrl}/api/auth/2fa`, {});
+  return this.http.post(
+    'http://localhost:8080/api/profile/2fa',
+    { enabled: false },
+    { responseType: 'text' as 'json' }
+  );
 }
 }

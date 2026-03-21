@@ -1,0 +1,23 @@
+# Git
+.git
+.gitignore
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# Angular frontend (not needed for backend builds)
+RevPassword_Manager/
+
+# Source code (not needed, only JARs are copied)
+**/src/
+
+# Logs
+*.log
+**/boot.log
+**/boot.err
+**/build.log
+
+# Zip archives
+*.zip

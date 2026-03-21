@@ -37,12 +37,20 @@ public class PasswordGeneratorService {
         if (req.isNumbers()) pool.append(NUM);
         if (req.isSymbols()) pool.append(SYM);
 
+        // Default to lowercase if nothing was selected
+        if (pool.length() == 0) pool.append(LOWER);
+
         String chars = pool.toString();
 
         if (req.isExcludeSimilar()) {
             for (char c : SIMILAR.toCharArray()) {
                 chars = chars.replace(String.valueOf(c), "");
             }
+        }
+
+        if (chars.isEmpty()) {
+            // Fallback: use lowercase letters if the pool is somehow empty
+            chars = LOWER;
         }
 
         List<String> list = new ArrayList<>();

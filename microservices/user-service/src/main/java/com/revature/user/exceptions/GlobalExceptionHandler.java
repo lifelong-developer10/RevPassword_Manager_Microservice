@@ -39,7 +39,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleRuntimeExceptions(RuntimeException ex) {
         System.out.println("CATCHING RuntimeException: " + ex.getClass().getName() + " - " + ex.getMessage());
         Map<String, String> errors = new HashMap<>();
-        errors.put("error", ex.getMessage());
+        // Don't expose internal mail/system errors — give a clean message
+        String msg = ex.getMessage();
+        if (msg != null && (msg.contains("Mail") || msg.contains("SMTP") || msg.contains("OTP"))) {
+            errors.put("error", "Could not send OTP email. Please check your email configuration.");
+        } else {
+            errors.put("error", msg);
+        }
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 

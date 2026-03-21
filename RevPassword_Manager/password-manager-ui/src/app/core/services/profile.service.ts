@@ -40,4 +40,11 @@ export class ProfileService {
 
 }
 
+  verifyMasterPassword(masterPassword: string) {
+    return this.http.post(
+      'http://localhost:8080/api/profile/verify-master-password',
+      { masterPassword }
+    );
+  }
+
 }
